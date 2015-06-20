@@ -17,46 +17,46 @@
 @implementation LineaProCDV
 
 -(void) scannerConect:(NSString*)num {
-    
+
     NSString *jsStatement = [NSString stringWithFormat:@"reportConnectionStatus('%@');", num];
     [self.webView stringByEvaluatingJavaScriptFromString:jsStatement];
-    
+
 }
 
 -(void) scannerBattery:(NSString*)num {
-    
+
     int percent;
     float voltage;
-    
-	if([dtdev getBatteryCapacity:&percent voltage:&voltage error:nil])
+
+    if([dtdev getBatteryCapacity:&percent voltage:&voltage error:nil])
     {
         NSString *status = [NSString stringWithFormat:@"Bat: %.2fv, %d%%",voltage,percent];
-        
+
         // send to web view
         NSString *jsStatement = [NSString stringWithFormat:@"reportBatteryStatus('%@');", status];
         [self.webView stringByEvaluatingJavaScriptFromString:jsStatement];
-        
+
     }
 }
 
 -(void) scanPaymentCard:(NSString*)num {
-    
+
     NSString *jsStatement = [NSString stringWithFormat:@"onSuccessScanPaymentCard('%@');", num];
     [self.webView stringByEvaluatingJavaScriptFromString:jsStatement];
-	[self.viewController dismissViewControllerAnimated:YES completion:nil];
-    
+    [self.viewController dismissViewControllerAnimated:YES completion:nil];
+
 }
 
 - (void)initDT:(CDVInvokedUrlCommand*)command
 {
     CDVPluginResult* pluginResult = nil;
-    
+
     if (!dtdev) {
         dtdev = [DTDevices sharedDevice];
         [dtdev addDelegate:self];
         [dtdev connect];
     }
-    
+
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
@@ -82,18 +82,18 @@
 
 - (void)connectionState: (int)state {
     NSLog(@"connectionState: %d", state);
-    
+
     switch (state) {
-		case CONN_DISCONNECTED:
-		case CONN_CONNECTING:
+        case CONN_DISCONNECTED:
+        case CONN_CONNECTING:
                 break;
-		case CONN_CONNECTED:
-		{
-			NSLog(@"PPad connected!\nSDK version: %d.%d\nHardware revision: %@\nFirmware revision: %@\nSerial number: %@", dtdev.sdkVersion/100,dtdev.sdkVersion%100,dtdev.hardwareRevision,dtdev.firmwareRevision,dtdev.serialNumber);
-			break;
-		}
-	}
-    
+        case CONN_CONNECTED:
+        {
+            NSLog(@"PPad connected!\nSDK version: %d.%d\nHardware revision: %@\nFirmware revision: %@\nSerial number: %@", dtdev.sdkVersion/100,dtdev.sdkVersion%100,dtdev.hardwareRevision,dtdev.firmwareRevision,dtdev.serialNumber);
+            break;
+        }
+    }
+
     NSString* retStr = [ NSString stringWithFormat:@"LineaProCDV.connectionChanged(%d);", state];
     [[super webView] stringByEvaluatingJavaScriptFromString:retStr];
 }
@@ -180,11 +180,11 @@
     [[super webView] stringByEvaluatingJavaScriptFromString:retStr];
 }
 
-- (void) barcodeNSData: (NSData *) barcode isotype:(NSString *) isotype {
-    NSLog(@"barcodeNSData: barcode - %@, type - %@", [[NSString alloc] initWithData:barcode encoding:NSUTF8StringEncoding], isotype);
-    NSString* retStr = [ NSString stringWithFormat:@"LineaProCDV.onBarcodeData('%@', '%@');", [[NSString alloc] initWithData:barcode encoding:NSUTF8StringEncoding], isotype];
-    [[super webView] stringByEvaluatingJavaScriptFromString:retStr];
-}
+//- (void) barcodeNSData: (NSData *) barcode isotype:(NSString *) isotype {
+//    NSLog(@"barcodeNSData: barcode - %@, type - %@", [[NSString alloc] initWithData:barcode encoding:NSUTF8StringEncoding], isotype);
+//    NSString* retStr = [ NSString stringWithFormat:@"LineaProCDV.onBarcodeData('%@', '%@');", [[NSString alloc] initWithData:barcode encoding:NSUTF8StringEncoding], isotype];
+//    [[super webView] stringByEvaluatingJavaScriptFromString:retStr];
+//}
 
 + (NSString*) getPDF417ValueByCode: (NSArray*) codesArr code:(NSString*)code {
     for (NSString* currStr in codesArr) {
@@ -210,41 +210,41 @@
     return arrayJSString;
 }
 
-- (void) barcodeNSData: (NSData *) barcode type:(int) type {
-    NSLog(@"barcodeNSData: barcode - %@, type - %@", [[NSString alloc] initWithData:barcode encoding:NSUTF8StringEncoding], [dtdev barcodeType2Text:type]);
-    NSArray *codesArr = [[[NSString alloc] initWithData:barcode encoding:NSUTF8StringEncoding] componentsSeparatedByCharactersInSet:
-                        [NSCharacterSet characterSetWithCharactersInString:@"\n\r"]];
-    NSString* substrDateBirth = @"DBB";
-    NSString* dateBirth = [LineaProCDV getPDF417ValueByCode:codesArr code: substrDateBirth];
-    NSString* substrName = @"DAC";
-    NSString* name = [LineaProCDV getPDF417ValueByCode:codesArr code: substrName];
-    NSString* substrLastName = @"DCS";
-    NSString* lastName = [LineaProCDV getPDF417ValueByCode:codesArr code: substrLastName];
-    NSString* substrEye = @"DAY";
-    NSString* eye = [LineaProCDV getPDF417ValueByCode:codesArr code: substrEye];
-    NSString* substrState = @"DAJ";
-    NSString* state = [LineaProCDV getPDF417ValueByCode:codesArr code: substrState];
-    NSString* substrCity = @"DAI";
-    NSString* city = [LineaProCDV getPDF417ValueByCode:codesArr code: substrCity];
-    NSString* substrHeight = @"DAU";
-    NSString* height = [LineaProCDV getPDF417ValueByCode:codesArr code: substrHeight];
-    NSString* substrWeight = @"DAW";
-    NSString* weight = [LineaProCDV getPDF417ValueByCode:codesArr code: substrWeight];
-    NSString* substrGender = @"DBC";
-    NSString* gender = [LineaProCDV getPDF417ValueByCode:codesArr code: substrGender];
-    NSString* substrHair = @"DAZ";
-    NSString* hair = [LineaProCDV getPDF417ValueByCode:codesArr code: substrHair];
-    NSString* substrExpires = @"DBA";
-    NSString* expires = [LineaProCDV getPDF417ValueByCode:codesArr code: substrExpires];
-    NSString* substrLicense = @"DAQ";
-    NSString* license = [LineaProCDV getPDF417ValueByCode:codesArr code: substrLicense];
-    NSLog(@"%@ %@ %@ %@ %@ %@ %@ %@ %@ %@ %@ %@", dateBirth, name, lastName, eye, state, city, height, weight, gender, hair, expires, license);
-    
-    NSString* rawCodesArrJSString = [LineaProCDV generateStringForArrayEvaluationInJS:codesArr];
-    //LineaProCDV.onBarcodeData(scanId, dob, state, city, expires, gender, height, weight, hair, eye)
-    NSString* retStr = [ NSString stringWithFormat:@"var rawCodesArr = %@; LineaProCDV.onBarcodeData(rawCodesArr, '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@');", rawCodesArrJSString, license, dateBirth, state, city, expires, gender, height, weight, hair, eye, name, lastName];
-    [[super webView] stringByEvaluatingJavaScriptFromString:retStr];
-}
+//- (void) barcodeNSData: (NSData *) barcode type:(int) type {
+//    NSLog(@"barcodeNSData: barcode - %@, type - %@", [[NSString alloc] initWithData:barcode encoding:NSUTF8StringEncoding], [dtdev barcodeType2Text:type]);
+//    NSArray *codesArr = [[[NSString alloc] initWithData:barcode encoding:NSUTF8StringEncoding] componentsSeparatedByCharactersInSet:
+//                        [NSCharacterSet characterSetWithCharactersInString:@"\n\r"]];
+//    NSString* substrDateBirth = @"DBB";
+//    NSString* dateBirth = [LineaProCDV getPDF417ValueByCode:codesArr code: substrDateBirth];
+//    NSString* substrName = @"DAC";
+//    NSString* name = [LineaProCDV getPDF417ValueByCode:codesArr code: substrName];
+//    NSString* substrLastName = @"DCS";
+//    NSString* lastName = [LineaProCDV getPDF417ValueByCode:codesArr code: substrLastName];
+//    NSString* substrEye = @"DAY";
+//    NSString* eye = [LineaProCDV getPDF417ValueByCode:codesArr code: substrEye];
+//    NSString* substrState = @"DAJ";
+//    NSString* state = [LineaProCDV getPDF417ValueByCode:codesArr code: substrState];
+//    NSString* substrCity = @"DAI";
+//    NSString* city = [LineaProCDV getPDF417ValueByCode:codesArr code: substrCity];
+//    NSString* substrHeight = @"DAU";
+//    NSString* height = [LineaProCDV getPDF417ValueByCode:codesArr code: substrHeight];
+//    NSString* substrWeight = @"DAW";
+//    NSString* weight = [LineaProCDV getPDF417ValueByCode:codesArr code: substrWeight];
+//    NSString* substrGender = @"DBC";
+//    NSString* gender = [LineaProCDV getPDF417ValueByCode:codesArr code: substrGender];
+//    NSString* substrHair = @"DAZ";
+//    NSString* hair = [LineaProCDV getPDF417ValueByCode:codesArr code: substrHair];
+//    NSString* substrExpires = @"DBA";
+//    NSString* expires = [LineaProCDV getPDF417ValueByCode:codesArr code: substrExpires];
+//    NSString* substrLicense = @"DAQ";
+//    NSString* license = [LineaProCDV getPDF417ValueByCode:codesArr code: substrLicense];
+//    NSLog(@"%@ %@ %@ %@ %@ %@ %@ %@ %@ %@ %@ %@", dateBirth, name, lastName, eye, state, city, height, weight, gender, hair, expires, license);
+//
+//    NSString* rawCodesArrJSString = [LineaProCDV generateStringForArrayEvaluationInJS:codesArr];
+//    //LineaProCDV.onBarcodeData(scanId, dob, state, city, expires, gender, height, weight, hair, eye)
+//    NSString* retStr = [ NSString stringWithFormat:@"var rawCodesArr = %@; LineaProCDV.onBarcodeData(rawCodesArr, '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@', '%@');", rawCodesArrJSString, license, dateBirth, state, city, expires, gender, height, weight, hair, eye, name, lastName];
+//    [[super webView] stringByEvaluatingJavaScriptFromString:retStr];
+//}
 
 - (void) bluetoothDeviceConnected: (NSString *) address {
     NSLog(@"bluetoothDeviceConnected: address - %@", address);
